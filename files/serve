@@ -1,0 +1,21 @@
+#!/bin/bash
+
+sed -e "s/{{PORT}}/$PORT/" -e "s/{{STATSD_HOST}}/$STATSD_HOST/"  -e "s/{{STATSD_PORT}}/$STATSD_PORT/" config/default.yaml.template > config/default.yaml
+
+/usr/sbin/nginx &
+./start.js &
+bucky_pid=$!
+
+sleep 5
+
+while :; do
+  if [ ! -f /run/nginx.pid ] || [ ! -d "/proc/$(cat /run/nginx.pid)" ] ; then
+    /usr/sbin/nginx &
+  fi
+  if [ ! -d "/proc/$bucky_pid" ] ; then
+    ./start.js &
+    bucky_pid=$!
+  fi
+
+  sleep 3
+done
